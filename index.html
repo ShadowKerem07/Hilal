@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hilal 💙</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d0d11;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        /* --- AKİLA GİRİŞ EKRANI (INTRO OVERLAY) --- */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050508;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 1;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        #intro-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .intro-card {
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .intro-img {
+            width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(255, 127, 80, 0.25), 0 0 50px rgba(128, 0, 32, 0.3);
+            border: 1px solid rgba(255, 140, 0, 0.25);
+            animation: pulseGlow 3s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 25px rgba(255, 127, 80, 0.2); }
+            100% { box-shadow: 0 0 45px rgba(255, 127, 80, 0.45); }
+        }
+
+        .intro-btn {
+            background: linear-gradient(45deg, #ff7f50, #ffa07a);
+            color: #fff;
+            border: none;
+            padding: 14px 36px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 0 20px rgba(255, 127, 80, 0.4);
+            pointer-events: auto;
+        }
+
+        .intro-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Kaydırılabilir Tuval Kapsayıcısı */
+        #viewport-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        #world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3000px;
+            height: 3000px;
+            transform-origin: 0 0;
+            will-change: transform;
+            /* Bordo Aura Çerçeve (Soft Glow) */
+            box-shadow: inset 0 0 100px 30px rgba(128, 0, 32, 0.55),
+                        inset 0 0 200px 60px rgba(139, 0, 0, 0.35);
+            border: 2px solid rgba(128, 0, 32, 0.4);
+        }
+
+        /* Çizim Tuvali */
+        #drawCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3000px;
+            height: 3000px;
+            z-index: 1;
+            cursor: crosshair;
+        }
+
+        /* Çizim Araç Çubuğu (Fixed/Sabit) */
+        #toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 140, 0, 0.35);
+            padding: 8px 16px;
+            border-radius: 30px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: transform 0.8s ease, opacity 0.8s ease;
+            pointer-events: auto;
+            max-width: 95vw;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #toolbar.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .color-btn {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .color-btn:hover, .color-btn.active {
+            transform: scale(1.2);
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tool-btn:hover, .tool-btn.active {
+            background: #ff7f50;
+            border-color: #ffa07a;
+        }
+
+        /* Kart Stilleri */
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px 25px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+            width: 88%;
+            box-shadow: 0 0 35px rgba(255, 127, 80, 0.25);
+            z-index: 10;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            position: absolute;
+            left: 1500px;
+            top: 1500px;
+            transform: translate(-50%, -50%);
+        }
+
+        .card.shift-up {
+            top: 1350px;
+            padding: 12px 20px;
+            max-width: 380px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+
+        h1 {
+            color: #ffa07a;
+            font-size: 2rem;
+            margin: 0 0 12px 0;
+            text-shadow: 0 0 10px rgba(255, 160, 122, 0.5);
+        }
+
+        .card.shift-up h1 {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+        }
+
+        #typing-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #eaeaea;
+            min-height: 60px;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+
+        .card.shift-up #typing-text {
+            font-size: 0.85rem;
+            line-height: 1.3;
+            min-height: auto;
+            margin-bottom: 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff7f50, #ffa07a);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            pointer-events: auto;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #ff7f50;
+        }
+
+        /* Turuncu Kalpler */
+        .heart-particle {
+            position: absolute;
+            color: #ff7f50;
+            font-size: 20px;
+            user-select: none;
+            pointer-events: none;
+            animation: floatUp 4s linear infinite;
+            z-index: 2;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.3); opacity: 0; }
+        }
+
+        /* Yıldız Parıltıları */
+        .star-particle {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: twinkle var(--duration) ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+        }
+
+        /* --- Sürüklenebilir Güvenli Müzik Çalar --- */
+        #music-player {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 140, 0, 0.4);
+            border-radius: 20px;
+            padding: 16px;
+            width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            pointer-events: auto;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #music-player.collapsed {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+        }
+
+        #music-player.collapsed:active {
+            cursor: grabbing;
+        }
+
+        #music-player.collapsed .player-content {
+            display: none;
+        }
+
+        .toggle-player-btn {
+            background: none;
+            border: none;
+            color: #ffa07a;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 6px;
+            cursor: grab;
+        }
+
+        .player-header:active {
+            cursor: grabbing;
+        }
+
+        .player-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #ffa07a;
+            pointer-events: none;
+        }
+
+        .current-track {
+            font-size: 0.95rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .time-text {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            min-width: 32px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-bar, .volume-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .progress-bar::-webkit-slider-thumb, .volume-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff7f50;
+            cursor: pointer;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .volume-btn {
+            background: none;
+            border: none;
+            color: #ffa07a;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #ff7f50;
+            transform: scale(1.08);
+        }
+
+        .playlist {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 4px;
+        }
+
+        .playlist::-webkit-scrollbar {
+            width: 4px;
+        }
+        .playlist::-webkit-scrollbar-thumb {
+            background: rgba(255, 160, 122, 0.5);
+            border-radius: 4px;
+        }
+
+        .playlist-item {
+            font-size: 0.85rem !important;
+            line-height: 1.5 !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            padding: 0 12px !important;
+            border-radius: 8px;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.88);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+
+        .playlist-item.active {
+            background: rgba(255, 127, 80, 0.4);
+            color: #ffa07a;
+            font-weight: 600;
+            border-left: 3px solid #ff7f50;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AKİLA AÇILIŞ GİRİŞ EKRANI -->
+    <div id="intro-overlay">
+        <div class="intro-card">
+            <img src="akila.jpg" alt="Akila" class="intro-img">
+            <button class="intro-btn" onclick="enterSite()">Sürprizi Keşfet 💙</button>
+        </div>
+    </div>
+
+    <!-- Kaydırılabilir Dünya Alanı -->
+    <div id="viewport-container">
+        <div id="world">
+            <canvas id="drawCanvas" width="3000" height="3000"></canvas>
+            <div class="card" id="mainCard">
+                <h1>Hilal 💙</h1>
+                <div id="typing-text"></div>
+                <button class="btn" id="start-btn" onclick="startSurprise()">Sürprizi Aç 💙</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Müzik Çalar Widget (Fixed) -->
+    <div id="music-player">
+        <button class="toggle-player-btn" id="min-btn" onclick="handleMinBtnClick()" style="display: none;">🎵</button>
+        <div class="player-content">
+            <div class="player-header" id="player-header">
+                <span class="player-title">🎶 Müzik Çalar</span>
+                <button class="toggle-player-btn" onclick="togglePlayer()">➖</button>
+            </div>
+            <div class="current-track" id="current-track-name">Çalınmıyor</div>
+            
+            <div class="progress-container">
+                <span class="time-text" id="current-time">0:00</span>
+                <input type="range" class="progress-bar" id="seek-bar" value="0" min="0" max="100" oninput="seekAudio()">
+                <span class="time-text" id="total-duration">0:00</span>
+            </div>
+
+            <div class="volume-container">
+                <button class="volume-btn" id="volume-icon" onclick="toggleMute()">🔊</button>
+                <input type="range" class="volume-bar" id="volume-bar" value="80" min="0" max="100" oninput="changeVolume()">
+            </div>
+
+            <div class="player-controls">
+                <button class="control-btn" onclick="prevTrack()">⏮</button>
+                <button class="control-btn" id="play-pause-btn" onclick="togglePlayPause()">▶</button>
+                <button class="control-btn" onclick="nextTrack()">⏭</button>
+            </div>
+            <div class="playlist" id="playlist-container"></div>
+        </div>
+    </div>
+
+    <!-- Çizim Menüsü (Fixed) -->
+    <div id="toolbar">
+        <div class="color-btn active" style="background: #ff7f50;" onclick="setColor('#ff7f50', '#ffa07a', this)"></div>
+        <div class="color-btn" style="background: #800020;" onclick="setColor('#800020', '#b22222', this)"></div>
+        <div class="color-btn" style="background: #000080;" onclick="setColor('#000080', '#1e90ff', this)"></div>
+        <div class="color-btn" style="background: #e0b0ff;" onclick="setColor('#e0b0ff', '#da70d6', this)"></div>
+        <div class="color-btn" style="background: #ffffff;" onclick="setColor('#ffffff', '#ffffff', this)"></div>
+        <button class="tool-btn" id="eraserBtn" onclick="toggleEraser(this)">🧹 Silgi</button>
+        <button class="tool-btn" onclick="clearCanvas()">🗑 Temizle</button>
+        <button class="tool-btn" id="modeBtn" onclick="toggleInteractivity()">✏ Çizim Modu</button>
+        <button class="tool-btn" onclick="centerView()">🎯 Merkeze Dön</button>
+        <button class="tool-btn" id="fullscreenBtn" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
+    </div>
+
+    <audio id="bg-music" preload="auto"></audio>
+
+    <script>
+        const initialMessage = "İyi ki yollarımız kesişmiş... Seninle tanıştığım ve seni tanıdığım için kendimi çok şanslı hissediyorum!";
+        // Kırmızı Kalpli Güncellenmiş 2. Not
+        const finalNote = "Benim akilam olur musun? Hayatımda olduğun ve bu dünyayı benimle paylaştığın için çok şanslıyım. Bu küçük alan tamamen senin için tasarlandı... ❤️";
+
+        let index = 0;
+        let isStarted = false;
+
+        const songs = [
+            { name: "Akila", src: "Akila.mp3" },
+            { name: "Paranoya", src: "Paranoya.mp3" },
+            { name: "Dua", src: "Dua.mp3" },
+            { name: "Söyle Ona", src: "Söyle Ona.mp3" },
+            { name: "Arka Bahçe", src: "Arka Bahçe.mp3" },
+            { name: "Umrumda Değil", src: "Umrumda Değil.mp3" },
+            { name: "Ölürüm Daha İyi", src: "Ölürüm Daha İyi.mp3" },
+            { name: "Mevsim Sonbahar", src: "Mevsim Sonbahar.mp3" },
+            { name: "Hayatı Yaşa", src: "Hayatı Yaşa.mp3" },
+            { name: "Rüzgar", src: "Rüzgar.mp3" },
+            { name: "Koyu Siyah", src: "Koyu Siyah.mp3" }
+        ];
+
+        let currentSongIndex = 0;
+        let previousVolume = 0.8;
+        const audio = document.getElementById("bg-music");
+        const seekBar = document.getElementById("seek-bar");
+        const volumeBar = document.getElementById("volume-bar");
+        const volumeIcon = document.getElementById("volume-icon");
+        const currentTimeElem = document.getElementById("current-time");
+        const totalDurationElem = document.getElementById("total-duration");
+
+        audio.volume = 0.8;
+
+        /* Akila Ekranından Pürüzsüz (Fade-Out) Geçiş */
+        function enterSite() {
+            const overlay = document.getElementById("intro-overlay");
+            overlay.classList.add("fade-out");
+            
+            setTimeout(() => {
+                overlay.style.display = "none";
+            }, 800);
+            
+            if (songs.length > 0) {
+                playSong(0);
+            }
+            
+            typeEffect();
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function initPlaylist() {
+            const container = document.getElementById("playlist-container");
+            container.innerHTML = "";
+            songs.forEach((song, idx) => {
+                const item = document.createElement("div");
+                item.classList.add("playlist-item");
+                if(idx === currentSongIndex) item.classList.add("active");
+                item.textContent = song.name;
+                item.onclick = () => playSong(idx);
+                container.appendChild(item);
+            });
+            updateTrackInfo();
+        }
+
+        function updateTrackInfo() {
+            if (songs.length > 0) {
+                document.getElementById("current-track-name").textContent = songs[currentSongIndex].name;
+            } else {
+                document.getElementById("current-track-name").textContent = "Şarkı Yok";
+            }
+            const items = document.querySelectorAll(".playlist-item");
+            items.forEach((item, idx) => {
+                if(idx === currentSongIndex) item.classList.add("active");
+                else item.classList.remove("active");
+            });
+        }
+
+        function playSong(index) {
+            if (songs.length === 0) return;
+            currentSongIndex = index;
+            audio.src = songs[currentSongIndex].src;
+            updateTrackInfo();
+            audio.play().then(() => {
+                document.getElementById("play-pause-btn").textContent = "❚❚";
+            }).catch(e => console.log("Oynatma hatası:", e));
+        }
+
+        function togglePlayPause() {
+            if (songs.length === 0) return;
+            if (!audio.src || audio.src === "") {
+                audio.src = songs[currentSongIndex].src;
+            }
+            if (audio.paused) {
+                audio.play();
+                document.getElementById("play-pause-btn").textContent = "❚❚";
+            } else {
+                audio.pause();
+                document.getElementById("play-pause-btn").textContent = "▶";
+            }
+        }
+
+        function nextTrack() {
+            if (songs.length === 0) return;
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            playSong(currentSongIndex);
+        }
+
+        function prevTrack() {
+            if (songs.length === 0) return;
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            playSong(currentSongIndex);
+        }
+
+        function changeVolume() {
+            audio.volume = volumeBar.value / 100;
+            if (audio.volume === 0) {
+                volumeIcon.textContent = "🔇";
+            } else if (audio.volume < 0.5) {
+                volumeIcon.textContent = "🔉";
+            } else {
+                volumeIcon.textContent = "🔊";
+            }
+        }
+
+        function toggleMute() {
+            if (audio.volume > 0) {
+                previousVolume = audio.volume;
+                audio.volume = 0;
+                volumeBar.value = 0;
+                volumeIcon.textContent = "🔇";
+            } else {
+                audio.volume = previousVolume || 0.8;
+                volumeBar.value = audio.volume * 100;
+                volumeIcon.textContent = audio.volume < 0.5 ? "🔉" : "🔊";
+            }
+        }
+
+        audio.addEventListener("timeupdate", () => {
+            if (!isNaN(audio.duration) && audio.duration > 0) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                seekBar.value = progress;
+                currentTimeElem.textContent = formatTime(audio.currentTime);
+                totalDurationElem.textContent = formatTime(audio.duration);
+            }
+        });
+
+        function seekAudio() {
+            if (!isNaN(audio.duration) && audio.duration > 0) {
+                const seekTo = (seekBar.value / 100) * audio.duration;
+                audio.currentTime = seekTo;
+            }
+        }
+
+        audio.addEventListener("ended", () => {
+            nextTrack();
+        });
+
+        function togglePlayer() {
+            const player = document.getElementById("music-player");
+            const minBtn = document.getElementById("min-btn");
+            player.classList.toggle("collapsed");
+            if (player.classList.contains("collapsed")) {
+                minBtn.style.display = "block";
+            } else {
+                minBtn.style.display = "none";
+            }
+            clampPlayerPosition();
+        }
+
+        function handleMinBtnClick() {
+            if (!hasDraggedPlayer) {
+                togglePlayer();
+            }
+        }
+
+        /* --- Müzik Çalar Sürükleme Mantığı --- */
+        const player = document.getElementById("music-player");
+        const playerHeader = document.getElementById("player-header");
+        const minBtn = document.getElementById("min-btn");
+        let isDraggingPlayer = false;
+        let hasDraggedPlayer = false;
+        let startXPlayer, startYPlayer, initialLeftPlayer, initialTopPlayer;
+
+        function clampPlayerPosition() {
+            const rect = player.getBoundingClientRect();
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+
+            let left = rect.left;
+            let top = rect.top;
+
+            if (left < 10) left = 10;
+            if (top < 10) top = 10;
+            if (left + rect.width > winWidth - 10) left = winWidth - rect.width - 10;
+            if (top + rect.height > winHeight - 10) top = winHeight - rect.height - 10;
+
+            player.style.right = 'auto';
+            player.style.left = left + 'px';
+            player.style.top = top + 'px';
+        }
+
+        function startDragPlayer(e) {
+            if (e.target.tagName === 'BUTTON' && !player.classList.contains('collapsed')) return;
+
+            isDraggingPlayer = true;
+            hasDraggedPlayer = false;
+
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            startXPlayer = clientX;
+            startYPlayer = clientY;
+
+            const rect = player.getBoundingClientRect();
+            initialLeftPlayer = rect.left;
+            initialTopPlayer = rect.top;
+
+            player.style.right = 'auto';
+            player.style.left = initialLeftPlayer + 'px';
+            player.style.top = initialTopPlayer + 'px';
+        }
+
+        function onDragPlayer(e) {
+            if (!isDraggingPlayer) return;
+
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            const dx = clientX - startXPlayer;
+            const dy = clientY - startYPlayer;
+
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                hasDraggedPlayer = true;
+            }
+
+            player.style.left = (initialLeftPlayer + dx) + 'px';
+            player.style.top = (initialTopPlayer + dy) + 'px';
+        }
+
+        function stopDragPlayer() {
+            if (isDraggingPlayer) {
+                isDraggingPlayer = false;
+                clampPlayerPosition();
+            }
+        }
+
+        playerHeader.addEventListener("mousedown", startDragPlayer);
+        minBtn.addEventListener("mousedown", startDragPlayer);
+
+        window.addEventListener("mousemove", onDragPlayer);
+        window.addEventListener("mouseup", stopDragPlayer);
+
+        playerHeader.addEventListener("touchstart", startDragPlayer, { passive: true });
+        minBtn.addEventListener("touchstart", startDragPlayer, { passive: true });
+
+        window.addEventListener("touchmove", onDragPlayer, { passive: true });
+        window.addEventListener("touchend", stopDragPlayer);
+
+        /* --- Dünya / Tuval Kaydırma ve Esnek Sınır Mantığı --- */
+        const world = document.getElementById("world");
+        const viewport = document.getElementById("viewport-container");
+        let worldX = 0;
+        let worldY = 0;
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+
+        function updateWorldTransform() {
+            const minX = window.innerWidth - 3000;
+            const minY = window.innerHeight - 3000;
+            const maxX = 0;
+            const maxY = 0;
+
+            if (worldX > maxX) worldX = maxX;
+            if (worldY > maxY) worldY = maxY;
+            if (worldX < minX) worldX = minX;
+            if (worldY < minY) worldY = minY;
+
+            world.style.transform = `translate3d(${worldX}px, ${worldY}px, 0)`;
+        }
+
+        function centerView() {
+            worldX = (window.innerWidth / 2) - 1500;
+            worldY = (window.innerHeight / 2) - 1500;
+            updateWorldTransform();
+        }
+
+        function startPan(e) {
+            if (isDrawingMode) return;
+            if (e.target.closest('#music-player') || e.target.closest('#toolbar') || e.target.closest('.card') || e.target.closest('#intro-overlay')) return;
+
+            isPanning = true;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            panStartX = clientX - worldX;
+            panStartY = clientY - worldY;
+            viewport.style.cursor = 'grabbing';
+        }
+
+        function onPan(e) {
+            if (!isPanning || isDrawingMode) return;
+
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            worldX = clientX - panStartX;
+            worldY = clientY - panStartY;
+            updateWorldTransform();
+        }
+
+        function stopPan() {
+            isPanning = false;
+            viewport.style.cursor = isDrawingMode ? 'default' : 'grab';
+        }
+
+        viewport.addEventListener('mousedown', startPan);
+        window.addEventListener('mousemove', onPan);
+        window.addEventListener('mouseup', stopPan);
+
+        viewport.addEventListener('touchstart', startPan, { passive: true });
+        window.addEventListener('touchmove', onPan, { passive: true });
+        window.addEventListener('touchend', stopPan);
+
+        /* Tam Ekran Kontrolü */
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen();
+                } else if (docEl.webkitRequestFullscreen) {
+                    docEl.webkitRequestFullscreen();
+                }
+                document.getElementById('fullscreenBtn').textContent = "⛶ Çıkış";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                document.getElementById('fullscreenBtn').textContent = "⛶ Tam Ekran";
+            }
+            setTimeout(clampPlayerPosition, 300);
+        }
+
+        /* Başlangıç Yazı Efekti */
+        function typeEffect() {
+            if (index < initialMessage.length) {
+                document.getElementById("typing-text").textContent += initialMessage.charAt(index);
+                index++;
+                setTimeout(typeEffect, 45);
+            }
+        }
+
+        function startSurprise() {
+            if(isStarted) return;
+            isStarted = true;
+
+            document.getElementById("start-btn").style.display = "none";
+            document.getElementById("typing-text").textContent = "";
+            
+            let nIndex = 0;
+            function typeNote() {
+                if (nIndex < finalNote.length) {
+                    document.getElementById("typing-text").textContent += finalNote.charAt(nIndex);
+                    nIndex++;
+                    setTimeout(typeNote, 40);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById("mainCard").classList.add("shift-up");
+                        document.getElementById("toolbar").classList.add("show");
+                        enableDrawing();
+                    }, 600);
+                }
+            }
+            typeNote();
+
+            setInterval(createHeart, 300);
+        }
+
+        /* Turuncu Kalp Oluşturucu */
+        function createHeart() {
+            const heart = document.createElement("div");
+            heart.classList.add("heart-particle");
+            heart.innerHTML = "🧡";
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.animationDuration = Math.random() * 2 + 3 + "s";
+            document.body.appendChild(heart);
+
+            setTimeout(() => heart.remove(), 4000);
+        }
+
+        /* Arka Plan Yıldız Efekti (Starry Night) */
+        function initStars() {
+            const worldElem = document.getElementById("world");
+            for (let i = 0; i < 70; i++) {
+                const star = document.createElement("div");
+                star.classList.add("star-particle");
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + "px";
+                star.style.height = size + "px";
+                star.style.left = Math.random() * 3000 + "px";
+                star.style.top = Math.random() * 3000 + "px";
+                star.style.setProperty('--duration', (Math.random() * 3 + 2) + "s");
+                worldElem.appendChild(star);
+            }
+        }
+
+        /* Çizim & Gezinme Modu Mantığı */
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentColor = '#ff7f50';
+        let currentGlow = '#ffa07a';
+        let isEraser = false;
+        let isDrawingMode = false;
+
+        function toggleInteractivity() {
+            isDrawingMode = !isDrawingMode;
+            const modeBtn = document.getElementById('modeBtn');
+            if (isDrawingMode) {
+                canvas.style.pointerEvents = 'auto';
+                viewport.style.cursor = 'default';
+                modeBtn.textContent = '✏️ Çizim Modu';
+                modeBtn.classList.add('active');
+            } else {
+                canvas.style.pointerEvents = 'none';
+                viewport.style.cursor = 'grab';
+                modeBtn.textContent = '🖐️ Gezinme Modu';
+                modeBtn.classList.remove('active');
+            }
+        }
+
+        function setColor(color, glow, element) {
+            isEraser = false;
+            document.getElementById('eraserBtn').classList.remove('active');
+            currentColor = color;
+            currentGlow = glow;
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function toggleEraser(element) {
+            isEraser = !isEraser;
+            if (isEraser) {
+                element.classList.add('active');
+                document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            } else {
+                element.classList.remove('active');
+                const firstColorBtn = document.querySelector('.color-btn');
+                if (firstColorBtn) firstColorBtn.classList.add('active');
+            }
+        }
+
+        function clearCanvas() {
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function enableDrawing() {
+            function getCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+
+            function startDraw(e) {
+                if (!isDrawingMode) return;
+                drawing = true;
+                const coords = getCoords(e);
+                ctx.beginPath();
+                ctx.moveTo(coords.x, coords.y);
+                draw(e);
+            }
+
+            function stopDraw() {
+                drawing = false;
+                ctx.beginPath();
+            }
+
+            function draw(e) {
+                if (!drawing || !isDrawingMode) return;
+
+                const coords = getCoords(e);
+
+                if (isEraser) {
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.lineWidth = 30;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.shadowBlur = 0;
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.strokeStyle = currentColor;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = currentGlow;
+                }
+
+                ctx.lineTo(coords.x, coords.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(coords.x, coords.y);
+            }
+
+            canvas.addEventListener('mousedown', startDraw);
+            window.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mousemove', draw);
+
+            canvas.addEventListener('touchstart', (e) => { 
+                if (isDrawingMode) {
+                    startDraw(e); 
+                }
+            }, { passive: true });
+            
+            window.addEventListener('touchend', stopDraw);
+            
+            canvas.addEventListener('touchmove', (e) => { 
+                if (isDrawingMode) {
+                    draw(e); 
+                }
+            }, { passive: true });
+        }
+
+        window.onload = () => {
+            centerView();
+            initPlaylist();
+            initStars();
+            toggleInteractivity();
+        };
+
+        window.addEventListener('resize', () => {
+            clampPlayerPosition();
+            updateWorldTransform();
+        });
+    </script>
+</body>
+</html>
